@@ -1,0 +1,155 @@
+{
+  "defaultLanguages": {
+    // Direct Mappings
+    "ar-AE": "ar-AE", // Arabic - UAE
+    "az-AZ": "az-AZ", // Azerbayani
+    "bg-BG": "bg-BG", // Bulgarian
+    "bn-BD": "bn-BD", // Bengali (Bangladesh)
+    "bn-IN": "bn-IN", // Bengali (India)
+    "bs-BA": "bs-BA", // Bosnian
+    "ca-ES": "ca-ES", // Catalan
+    "cs-CZ": "cs-CZ", // Czech (Czech Republic)
+    "da-DK": "da-DK", // Danish
+    "de-DE": "de-DE", // German/Germany
+    "el-GR": "el-GR", // Greek
+    "en-GB": "en-GB", // English/Great Britain
+    "en-IN": "en-IN", // English/India
+    "en-US": "en-US", // English/United States
+    "es-AR": "es-AR", // Spanish/Argentina
+    "es-ES": "es-ES", // Spanish/Spain
+    "es-LA": "es-LA", // Spanish (LATAM)
+    "es-MX": "es-MX", // Spanish/Mexico
+    "es-UN": "es-UN", // Spanish (International)
+    "es-US": "es-US", // Spanish/United States
+    "et-EE": "et-EE", // Estonian
+    "fa-IR": "fa-IR", // Persian (Farsi)
+    "fi-FI": "fi-FI", // Finnish
+    "fr-CA": "fr-CA", // French (Canada)
+    "fr-FR": "fr-FR", // French/France
+    "gu-IN": "gu-IN", // Gujarati
+    "he-IL": "iw-IL", // Hebrew
+    "hi-IN": "hi-IN", // Hindi
+    "hr-HR": "hr-HR", // Croatian
+    "hu-HU": "hu-HU", // Hungarian
+    "in-ID": "in-ID", // Indonesian
+    "is-IS": "is-IS", // Icelandic
+    "it-IT": "it-IT", // Italian/Italy
+    "iw-IL": "iw-IL", // Hebrew
+    "ja-JP": "ja-JP", // Japanese
+    "jv-ID": "jv-ID", // Javanese (Indonesia)
+    "ka-GE": "ka-GE", // Georgian
+    "kk-KZ": "kk-KZ", // Kazakh
+    "kn-IN": "kn-IN", // Kannada (India)
+    "ko-KR": "ko-KR", // Korean
+    "lt-LT": "lt-LT", // Lithuanian
+    "lv-LV": "lv-LV", // Latvian (Lettish)
+    "mk-MK": "mk-MK", // Macedonian
+    "mn-MN": "mn-MN", // Mongolian
+    "ms-MY": "ms-MY", // Malay
+    "nl-NL": "nl-NL", // Dutch
+    "no-NO": "no-NO", // Norwegian
+    "pl-PL": "pl-PL", // Polish
+    "pt-BR": "pt-BR", // Portuguese/Brazil
+    "pt-PT": "pt-PT", // Portuguese
+    "ro-RO": "ro-RO", // Romanian
+    "ru-RU": "ru-RU", // Russian
+    "si-LK": "si-LK", // Sinhala (Sri Lanka)
+    "sl-SL": "sl-SL", // Slovenian
+    "sk-SK": "sk-SK", // Slovak - Slovakia
+    "sq-AL": "sq-AL", // Albanian
+    "sr-BA": "sr-BA", // Serbian (Bosnia and Herzegovina)
+    "sr-ME": "sr-ME", // Serbian (Montenegrin)
+    "sr-RS": "sr-RS", // Serbian (Serbia)
+    "sv-SE": "sv-SE", // Swedish - Sweden
+    "sw-KE": "sw-KE", // Swahili (Kenya)
+    "ta-IN": "ta-IN", // Tamil (India)
+    "ta-LK": "ta-LK", // Tamil (Sri Lanka)
+    "te-IN": "te-IN", // Telugu (India)
+    "tg-TJ": "tg-TJ", // Tajik (Tajikistan)
+    "th-TH": "th-TH", // Thai - Thailand
+    "tl-PH": "tl-PH", // Tagalog (Philippine)
+    "tr-TR": "tr-TR", // Turkish - Turkey
+    "uk-UA": "uk-UA", // Ukrainian - Ukraine
+    "ur-PK": "ur-PK", // Urdu
+    "uz-UZ": "uz-UZ", // Uzbek
+    "vi-VN": "vi-VN", // Vietnamese
+    "zh-CN": "zh-CN", // Simplified Chinese
+    "zh-HK": "zh-HK", // Chinese Hong Kong
+    "zh-TW": "zh-TW", // Chinese Taiwan
+
+    // Indirect Mappings
+    "nb-NO": "no-NO",
+    "nn-NO": "no-NO",
+    "de-CH": "de-DE",
+    "fr-CH": "fr-FR",
+    "it-CH": "it-IT",
+    "he-IL": "iw-IL",
+    //    "es_ES": "es_US",
+    "id-ID": "in-ID",
+
+    // Default Mappings
+    "sv": "sv-SE",
+    "sk": "sk-SK",
+    "hu": "hu-HU",
+    "hr": "hr-HR",
+    "hi": "hi-IN",
+    "he": "iw-IL",
+    "bn": "bn-BD",
+    "el": "el-GR",
+    "ms": "ms-MY",
+    "ru": "ru-RU",
+    "ro": "ro-RO",
+    "ar": "ar-AE",
+    "da": "da-DK",
+    "vi": "vi-VN",
+    "tr": "tr-TR",
+    "tl": "tl-PH",
+    "th": "th-TH",
+    "in": "in-ID",
+    "iw": "iw-IL",
+    "cs": "cs-CZ",
+    "ca": "ca-ES",
+    "fi": "fi-FI",
+    "fa": "fa-IR",
+    "no": "no-NO",
+    "nl": "nl-NL",
+    "ur": "ur-PK",
+    "uk": "uk-UA",
+    "kk": "kk-KZ",
+    "de": "de-DE",
+    "pt": "pt-BR",
+    "fr": "fr-FR",
+    "en": "en-US",
+    "ko": "ko-KR",
+    "zh": "zh-HK",
+    "es": "es-US",
+    "ja": "ja-JP",
+    "nb": "no-NO",
+    "nn": "no-NO",
+    "id": "in-ID",
+    "it": "it-IT",
+    "pl": "pl-PL",
+    "az": "az-AZ",
+    "bg": "bg-BG",
+    "bs": "bs-BA",
+    "et": "et-EE",
+    "gu": "gu-IN",
+    "is": "is-IS",
+    "jv": "jv-ID",
+    "ka": "ka-GE",
+    "kn": "kn-IN",
+    "lt": "lt-LT",
+    "lv": "lv-LV",
+    "mk": "mk-MK",
+    "mn": "mn-MN",
+    "si": "si-LK",
+    "sl": "sl-SL",
+    "sq": "sq-AL",
+    "sr": "sr-RS",
+    "sw": "sw-KE",
+    "ta": "ta-IN",
+    "te": "te-IN",
+    "tg": "tg-TJ",
+    "uz": "uz-UZ"    
+  }
+}

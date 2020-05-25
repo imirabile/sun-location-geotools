@@ -1,0 +1,549 @@
+swagger: '2.0'
+info:
+  title: 'Location Microservice API'
+  description: 'This service provides location lookup functionalities. The currently supported lookups are; forward and reverse geocoding, ip address, and shapefile.'
+  version: 3.3.0
+host: 'qaapi.weather.com'
+schemes:
+  - http
+basePath: /v3/location
+produces:
+  - application/json
+paths:
+  /:
+    get:
+      summary: 'Fetch location data'
+      description: 'The endpoint used for forward and reverse geocode lookups. The returned object will contain both geocode and location fields, regardless of which option is passed as a parameter. Only one of the following can be provided; geocode or location. This is around to support legacy calls.'
+      parameters:
+        - name: geocode
+          in: query
+          description: 'Latitude/Longitude coordinates to search by.'
+          required: false
+          type: string
+          format: 'xx.xx,yy.yy'
+        - name: address
+          in: query
+          description: 'Street address to search by. Can be a fragment of an address, such as a city or zip code.'
+          required: false
+          type: string
+        - name: language
+          in: query
+          description: 'ISO language code for the requested culture.'
+          required: true
+          type: string
+          format: 'xx-XX'
+        - name: format
+          in: query
+          description: 'The format in which to return results. Currently, only json is supported.'
+          required: true
+          type: string
+      tags:
+        - Address
+        - Geocode
+      responses:
+        '200':
+          description: 'An array of location objects.'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/LocationCompact'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /search:
+    get:
+      summary: 'Fetch location data by query'
+      description: 'Resolves location information by an address, address fragment, or geocode. Returns up to 10 results based on the provided query.'
+      parameters:
+        - name: query
+          in: query
+          description: 'Street address to search by. Can be a fragment of an address, such as a city or zip code.'
+          required: true
+          type: string
+        - name: language
+          in: query
+          description: 'ISO language code for the requested culture.'
+          required: true
+          type: string
+          format: 'xx-XX'
+        - name: format
+          in: query
+          description: 'The format in which to return results. Currently, only json is supported.'
+          required: true
+          type: string
+        - name: countryCode
+          in: query
+          description: 'If provided, will cause only records from the given country code to be returned.'
+          type: string
+          required: false
+        - name: adminDistrictCode
+          in: query
+          description: 'If provided, will cause only records from the given admin district code to be returned.'
+          type: string
+          required: false
+        - name: locationType
+          in: query
+          description: 'If provided, will cause only records of the given location type to be returned.'
+          type: string
+          required: false
+          enum:
+            - address
+            - city
+      tags:
+        - Address
+        - Geocoding
+      responses:
+        '200':
+          description: 'An array of location objects.'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/LocationCompact'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /iplookup:
+    get:
+      summary: 'Fetch location data by ip address'
+      description: 'Resolves location information by an IPv4 or IPv6 address.'
+      parameters:
+        - name: ip
+          in: query
+          description: '.'
+          required: true
+          type: string
+        - name: language
+          in: query
+          description: 'ISO language code for the requested culture.'
+          required: true
+          type: string
+          format: 'xx-XX'
+        - name: format
+          in: query
+          description: 'The format in which to return results. Currently, only json is supported.'
+          required: true
+          type: string
+      tags:
+        - IP
+        - Geocoding
+      responses:
+        '200':
+          description: 'An array of location objects.'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/LocationCompact'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /geohittest:
+    get:
+      summary: 'Fetches product data by geocode'
+      description: 'Geo Hit Test allows for retrieval of product data, eg alert, obs stations, etc, given a geocode. This data is retrieved from one of more shapefiles.'
+      parameters:
+        - name: geocode
+          in: query
+          description: 'Latitude/Longitude coordinates to search by.'
+          required: true
+          type: string
+          format: 'xx.xx,yy.yy'
+        - name: product
+          in: query
+          description: 'The product data to fetch.'
+          required: true
+          type: string
+      tags:
+        - Shapefile
+        - Geocode
+        - Product
+      responses:
+        '200':
+          description: 'A product object.'
+          schema:
+              $ref: '#/definitions/Products'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /pointmap:
+    get:
+      summary: 'Fetches a geocode for a given product id'
+      description: 'Point map fetches predefined central geocodes given a polygons id. For example, given the airport key KATL:US, the service would return a geocode within the area served by Hartsfield-Jackson intl.'
+      parameters:
+        - name: type
+          in: query
+          description: 'The shapefile in which the key is found.'
+          required: true
+          type: string
+        - name: id
+          in: query
+          description: 'The product id within the shapefile.'
+          required: true
+          type: string
+      tags:
+        - Shapefile
+        - Geocode
+        - Product
+      responses:
+        '200':
+          description: 'A document containing the geocode for the given point.'
+          schema:
+            type: object
+            properties:
+              type:
+                type: string
+                description: 'The shapefile in which the given id exists.'
+              id:
+                type: string
+                description: 'The polygon identifier.'
+              geocode:
+                type: string
+                description: 'The lat/lon coordinates associated with the id.'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /resolve:
+    get:
+      summary: 'Fetches product data based on a type/id pair.'
+      description: 'Resolve is essentially a combination of point mapping and geo hit test. Given a type and an ID, resolve will first determine the geocode for that polygon. Then it will use that geocode to fetch the requested products key(s).'
+      parameters:
+        - name: product
+          in: query
+          description: 'The product data requested.'
+          type: string
+          required: true
+        - name: type
+          in: query
+          description: 'The shapefile in which the key is found.'
+          required: true
+          type: string
+        - name: id
+          in: query
+          description: 'The product id within the shapefile.'
+          required: true
+          type: string
+      tags:
+        - Shapefile
+        - Geocode
+        - Product
+      responses:
+        '200':
+          description: 'A document containing the product, product key, type, and polygon id.'
+          schema:
+            type: object
+            properties:
+              product:
+                type: string
+                description: 'The product whose keys are being requested.'
+              key:
+                type: string
+                description: 'The product key being request.'
+              type:
+                type: string
+                description: 'The shapefile in which the given id exists.'
+              id:
+                type: string
+                description: 'The polygon identifier.'
+              geocode:
+                type: string
+                description: 'The lat/lon coordinates associated with the id.'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /point:
+    get:
+      summary: 'Fetches location data by a type/id pair'
+      description: 'Mappoint resolves location data given a type/id pair. First, the geocode is determined via the logic of the pointmap route. Secondly, if a geocode is returned, it is used for a standard location provider call.'
+      parameters:
+        - name: geocode
+          in: query
+          description: 'The geocode to look up.'
+          required: false
+          type: string
+        - name: postalKey
+          in: query
+          description: 'The postal code to look up.'
+          required: false
+          type: string
+          format: 'postalCode:countryCode'
+        - name: iataCode
+          in: query
+          description: 'The iata airport code used for the lookup.'
+          required: false
+          type: string
+        - name: icaoCode
+          in: query
+          description: 'The icao airport code used for the lookup.'
+          required: false
+          type: string
+        - name: placeid
+          in: query
+          description: 'The place identifier to look up by.’
+          required: false
+          type: string
+      tags:
+        - Shapefile
+        - Geocode
+        - Product
+      responses:
+        '200':
+          description: 'A product object.'
+          schema:
+              $ref: '#/definitions/Location'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error' 
+  /boundary:
+    get:
+      summary: 'Returns the polygon geometry of the requested product'
+      description: 'Boundary looks up the requested key in the requested product and returns the polygons geometry as either a KML or GeoJSON document.'
+      parameters:
+        - name: product
+          in: query
+          description: 'The product data requested.'
+          type: string
+          required: true
+        - name: type
+          in: query
+          description: 'The shapefile in which the key is found.'
+          required: true
+          type: string
+        - name: id
+          in: query
+          description: 'The product id within the shapefile.'
+          required: true
+          type: string
+        - name: format
+          in: query
+          description: 'The format in which to return results. GeoJSON or KML.'
+          required: true
+          type: string
+      tags:
+        - Polygon
+        - Geocode
+        - Product
+      responses:
+        '200':
+          description: 'A polygons geometry in KML or GeoJSON.
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /intersection:
+    get:
+      summary: 'Returns the result of overlapping a polygon on top of another polygon.'
+      description: 'Intersection takes two polygons and finds the areas where they intersect. The keys in the intersection are returned.'
+      parameters:
+        - name: product
+          in: query
+          description: 'The product data requested.'
+          type: string
+          required: true
+        - name: overlay
+          in: query
+          description: 'The product upon which to test the other product.'
+          type: string
+          required: true
+        - name: type
+          in: query
+          description: 'The shapefile in which the key is found.'
+          required: true
+          type: string
+        - name: id
+          in: query
+          description: 'The product id within the shapefile.'
+          required: true
+          type: string
+        - name: format
+          in: query
+          description: 'The format in which to return results. Currently, only json is supported.'
+          required: true
+          type: string
+      tags:
+        - Polygon
+        - Geocode
+        - Product
+      responses:
+        '200':
+          description: 'A document containing all overlapping products keys.'
+          schema:
+            type: object
+            properties:
+              product:
+                type: string
+                description: 'The product whose keys are being requested.'
+              key:
+                type: string
+                description: 'The product key being request.'
+              type:
+                type: string
+                description: 'The shapefile in which the given id exists.'
+              key-type:
+                type: string
+                description: 'The overlaye polygon identifier.'
+              keys:
+                type: array
+                items: {
+                  type: string 
+                }
+                description: 'An array of keys..'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  LocationCompact:
+    type: object
+    properties:
+      latitude:
+        type: array
+        items: {
+          type: number 
+        }
+        description: 'An array of numeric values from -90 to 90 which specify the distance north or south of the equator.'
+      longitude:
+        type: array
+        items: {
+          type: number 
+        }
+        description: 'An array of numeric value from -180 to 180 which specify the distance east or west of the prime meridian.'
+      address:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of descriptive information about a location.'
+      city:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of city display names for the location.'
+      locale:
+        type: array
+        items: {
+          $ref: "#/definitions/Locale" 
+        }
+        description: 'An array of city level data for the location.'
+      neighbohood:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of neighborhood/area names.'
+      adminDistrict:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of state/region names for the location.'
+      adminDistrictCode:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of state/region codes for the location.'
+      postal_code:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of alphanumeric postal identifiers.'
+      postal_key:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of postal codes with the country code appended at the end.'
+      country:
+        type: array
+        items: {
+          type: number 
+        }
+        description: 'An array of names of the Locations countries'
+      country_code:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of ISO country codes.'
+      ianaTimeZone:
+        type: array
+        items: {
+          type: string 
+        }
+        description: 'An array of IANA time zone names.'
+  Location:
+    type: object
+    properties:
+      latitude:
+        type: number
+        description: 'Numeric value from -90 to 90 which specifies the distance north or south of the equator.'
+      longitude:
+        type: number
+        description: 'Numeric value from -180 to 180 which specifies the distance east or west of the prime meridian.'
+      city:
+        type: string
+        description: 'The city or upper level place name.'
+      locale:
+        $ref: "#/definitions/Locale"
+      adminDistrict:
+        type: string
+        description: 'The state/region name for the Location.'
+      adminDistrictCode:
+        type: string
+        description: 'The state/region code for the Location.'
+      neighbohood:
+        type: string
+        description: 'The name of the neighborhood'
+      country:
+        type: string
+        description: 'The name of the Locations country.'
+      country_code:
+        type: string
+        description: 'The locations ISO country code.'
+      postal_code:
+        type: string
+        description: 'The alphanumeric postal identifier.'
+      postal_key:
+        type: string
+        description: 'The concatenation of postal code and country code.'
+      ianaTimeZone:
+        type: string
+        description: 'The name if the IANA time zone.'
+  Products:
+    type: object
+    properties:
+      product:
+        type: string
+        description: 'The field the user has requested.'
+      key:
+        type: string
+        description: 'The key data for the product requested.'
+  Locale:
+    type: object
+    properties:
+      locale1: 
+        type: string
+        description: 'The highest city level present.'
+      locale2: 
+        type: string
+        description: 'Lower level place data. This is sub-city data.'
+      locale3: 
+        type: string
+        description: 'Lower level place data. This is sub-city data.'
+  Error:
+    type: object
+    properties:
+      code:
+        type: string
+        description: 'SUN error code.'
+      message:
+        type: string
+        description: 'A descriptive message about the error.'
