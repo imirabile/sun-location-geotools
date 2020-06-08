@@ -100,6 +100,7 @@
        (log/debug ex)))))
 
 (def ^:private pat (re-pattern "\\\""))
+
 (def ^:private lang-code-pattern
   "Regex pattern for matching language codes."
   (re-pattern #"(\w+-?\w*):\s+(\w+-\w*)"))
@@ -141,6 +142,12 @@
     (catch java.io.UnsupportedEncodingException ex
       (log/info "Unsupported character set" encoding)
       (log/debug ex))))
+
+(defn iso-8859-1-encoding
+  "Encodes the string to ISO-8859-1"
+  [s]
+  (when s
+    (encode-string (str s) "ISO-8859-1")))
 
 (defn extract-language
   "Extracts the language value from a full culture code."
@@ -253,7 +260,6 @@
     (if (nil? t) h
         (str (str/lower-case h) (apply str (map str/capitalize t))))))
 
-
 (defn camel->
   "Converts a string from camel case (\"thisIsACamelCaseExample\"). When a
   capital letter is encountered, the given delimeter will be placed before it.
@@ -270,7 +276,6 @@
           (subs st (count delim))  ; replaced it with 'delim[A-Z]', and need to strip off delim
           st))
     s))
-
 
 (defn snake-to-camel
   "Converts a string from snake_case to camelCase.  See doc for ->camel."
@@ -319,7 +324,6 @@
   (let [[h & t :as new-s] (if delims (->camel s delims) (->camel s))]
     (if (= new-s s) s
         (str (str/upper-case h) (apply str t)))))
-
 
 (defn pascal-to-snake "Identical to camel-to-snake." [s] (camel-to-snake s))
 (defn pascal-to-kebab "Identical to camel-to-kebab." [s] (camel-to-kebab s))

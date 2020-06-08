@@ -22,6 +22,7 @@
                  [rm-hull/ring-gzip-middleware "0.1.7"]
                  [org.geotools/gt-main "23.0"]
                  [org.geotools/gt-shapefile "23.0"]
+                 [org.geotools/gt-geopkg "23.0"]
                  [org.geotools/gt-cql "23.0"]
                  [org.geotools/gt-data "16.2"]
                  [com.vividsolutions/jts "1.11"]
