@@ -1,9 +1,10 @@
 (ns location.geohittest
-  (:use     [location.macros]
-            [location.utils.geometry]
-            [location.utils.common])
+  (:use [location.macros]
+        [location.utils.geometry]
+        [location.utils.common])
   (:require [location.config :as cfg]
-            [location.shapefile :as shape]))
+            [location.shapefile :as shape]
+            [location.geopackage :as geopkg]))
 
 (defn ^:private get-identity
   "The identity value for a geo hit test request is the geocode itself. If a request for a geocode comes in, that value should just be returned."
@@ -16,7 +17,9 @@
   "Fetches the key from the provide product polygon."
   [geocode product language]
   {:product product
-   :data    (shape/get-polygons geocode (conj #{} product) language nil)})
+   ;; use config to determine if going through shapefile or geopackage
+   ;;:data    (shape/get-polygons geocode (conj #{} product) language nil)})
+   :data    (geopkg/get-polygons geocode (conj #{} product) language nil)})
 
 (defn ^:private get-key
   "Returns the product key for the provided data. Checks if there is a configured key, if not, returns the provided value."
