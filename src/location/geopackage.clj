@@ -3,13 +3,17 @@
   (:use [location.macros]
         [location.utils.geometry]
         [location.utils.common])
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [clojure.core.memoize :as memo]
-            [clojure.set :as set]
             [location.config :as cfg])
-  (:import [org.geotools.data FileDataStoreFinder]))
+  (:import [org.geotools.data FileDataStoreFinder]
+           ;;[org.geotools.geopkg GeoPackage]
+           ))
+
+
+(def gt-path (str (cfg/get-config-first "geopackage.path") "/lsd_prod_all.gpkg"))
+
+;;(defonce ^GeoPackage geopackage (GeoPackage. gt-path))
 
 (def ^:private default-attr "PRESENT_NM")
 
@@ -19,24 +23,25 @@
   (when (some? data) (.close data))
   (when (some? store) (.dispose store)))
 
-(defn ^:private get-geopackage
-  "Returns the file path for the given geopackage."
-  []
-  (log/info "gettin geopackage")
-  (let [gp-path (str (cfg/get-config-first "geopackage.path") "/lsd_prod_all.gpkg")
-        file (io/file gp-path)]
-    (when (.exists file)
-      (log/debug "found geopackage")
-      file)))
+;;
+;;(defn ^:private get-geopackage
+;;  "Returns the file path for the given geopackage."
+;;  []
+;;  (log/info "gettin geopackage")
+;;  (let [gp-path (str (cfg/get-config-first "geopackage.path") "/lsd_prod_all.gpkg")
+;;        file (io/file gp-path)]
+;;    (when (.exists file)
+;;      (log/debug "found geopackage")
+;;      file)))
 
-(def get-geopackage
-  "Returns the feature source data for the supplied geopackage. This function is memoized due to the small number of possible geopackages."
-  (memo/ttl get-geopackage :ttl/threshold (* (cfg/get-config "default.time.to.live") 1000)))
+;;(def get-geopackage
+;;  "Returns the feature source data for the supplied geopackage. This function is memoized due to the small number of possible geopackages."
+;;  (memo/ttl get-geopackage :ttl/threshold (* (cfg/get-config "default.time.to.live") 1000)))
 
 (defn ^:private get-features
   "Fetches the geopackage feature data using CQL."
   [polygon fltr]
-  (when-let [store (FileDataStoreFinder/getDataStore get-geopackage)]
+  (when-let [store (FileDataStoreFinder/getDataStore "get-geopackage")]
     (try
       [store
        (some-> store
