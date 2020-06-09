@@ -1,13 +1,14 @@
 (ns location.intersection
+  (:use [location.macros]
+        [location.utils.geometry])
   (:require [location.shapefile    :as shape]
-            [location.utils.common :as util]
             [location.geohittest   :as gh]))
 
 (defn ^:private format-intersections
   "Formats the response map"
   [res-data product geo o]
-  (let [ks (map #(gh/get-keys geo %) (shape/expand-product o))
-        expanded (shape/expand-product product)]
+  (let [ks (map #(gh/get-keys geo %) (expand-product o))
+        expanded (expand-product product)]
     ;; Nested map is needed for in case multiple expanded parameters (ie alerts) get used
     (mapcat
       (fn

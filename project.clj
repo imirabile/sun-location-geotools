@@ -26,10 +26,12 @@
                                org.geotools.xsd/gt-xsd-core]]
                  [org.geotools/gt-shapefile "23.0"
                   :exclusions [org.eclipse.emf/org.eclipse.emf.ecore]]
-                 [org.geotools/gt-geopkg "23.0"
+                 [org.geotools/gt-geopkg "23.1"
                   :exclusions [org.eclipse.emf/org.eclipse.emf.ecore
                                org.eclipse.emf/org.eclipse.emf.common
-                               org.geotools.xsd/gt-xsd-core]]
+                               ;;org.geotools.xsd/gt-xsd-core
+                               ]
+                  ]
                  [org.geotools/gt-cql "23.0"
                   :exclusions [org.eclipse.emf/org.eclipse.emf.common
                                org.eclipse.emf/org.eclipse.emf.ecore]]

@@ -5,53 +5,29 @@
         [location.utils.common])
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [location.config :as cfg])
-  (:import [org.geotools.data FileDataStoreFinder]
-           ;;[org.geotools.geopkg GeoPackage]
-           ))
+            [location.config :as cfg]
+            [clojure.java.io :as io])
+  (:import [org.geotools.geopkg GeoPackage]))
 
 
 (def gt-path (str (cfg/get-config-first "geopackage.path") "/lsd_prod_all.gpkg"))
 
-;;(defonce ^GeoPackage geopackage (GeoPackage. gt-path))
+(defonce ^GeoPackage geopackage (GeoPackage. (io/file gt-path)))
 
 (def ^:private default-attr "PRESENT_NM")
-
-(defn ^:private close-shape
-  "Closes the data stream from the geopackage and disposes its data store"
-  [store data]
-  (when (some? data) (.close data))
-  (when (some? store) (.dispose store)))
-
-;;
-;;(defn ^:private get-geopackage
-;;  "Returns the file path for the given geopackage."
-;;  []
-;;  (log/info "gettin geopackage")
-;;  (let [gp-path (str (cfg/get-config-first "geopackage.path") "/lsd_prod_all.gpkg")
-;;        file (io/file gp-path)]
-;;    (when (.exists file)
-;;      (log/debug "found geopackage")
-;;      file)))
-
-;;(def get-geopackage
-;;  "Returns the feature source data for the supplied geopackage. This function is memoized due to the small number of possible geopackages."
-;;  (memo/ttl get-geopackage :ttl/threshold (* (cfg/get-config "default.time.to.live") 1000)))
 
 (defn ^:private get-features
   "Fetches the geopackage feature data using CQL."
   [polygon fltr]
-  (when-let [store (FileDataStoreFinder/getDataStore "get-geopackage")]
-    (try
-      [store
-       (some-> store
-               (.getFeatureSource polygon)
-               (.getFeatures fltr)
-               .features)]
+  (try
+    (some-> geopackage
+            (.getFeatureSource polygon)
+            (.getFeatures fltr)
+            .features)
 
-      (catch org.geotools.data.DataSourceException ex
-        (log/info "Exception while loading" polygon "features")
-        (log/debug ex)))))
+    (catch org.geotools.data.DataSourceException ex
+      (log/info "Exception while loading" polygon "features")
+      (log/debug ex))))
 
 (defn ^:private nil-attr
   "Gets the provided attribute from the provided geopackage data. If this yields a nil or empty value, nil is returned."
@@ -82,7 +58,7 @@
 
 (defn ^:private get-attribute
   "Fetches the attribute data from the given geopackage feature."
-  [data store product locale]
+  [data product locale]
 
   "coll must be mutable due to the way geotools implemented their iterator. This is not a
    shared value and is used to build an immutable vector, which is returned. It was deemed
@@ -101,13 +77,6 @@
       (log/error "Exception retrieving data from geopackage.")
       (log/error ex))))
 
-(defn expand-product
-  "Retrieves the geopackages that make up the supplied product."
-  [product]
-  (if-let [products (cfg/get-config (str "product." product))]
-    products
-    [product]))
-
 (defn ^:private apply-key-mask
   "For the geopackages which emit multiple attributes, zipmap them with the provided data."
   [product data]
@@ -121,9 +90,9 @@
    (get-polygon fltr locale product product))
 
   ([fltr locale product shape]
-   (let [[store data] (get-features shape fltr)
-         attributes (when data (get-attribute data store product locale))]
-     (close-shape store data)
+   (let [data (get-features shape fltr)
+         attributes (when data (get-attribute data product locale))]
+     ;;(close-shape store data)
      (apply-key-mask product attributes))))
 
 (defn ^:private get-product
@@ -196,7 +165,7 @@
    (get-boundary fltr product product))
 
   ([fltr product shape]
-   (let [[store data] (get-features shape fltr)
+   (let [data (get-features shape fltr)
          coll (transient [])]
      (try
        (while (.hasNext data)
@@ -213,8 +182,10 @@
        (catch Exception ex
          (log/debug "Exception fetching " product " geometry")
          (log/error ex))
-       (finally
-         (close-shape store data)))
+       ;;(finally
+       ;;  (close-shape store data)
+       ;;  )
+       )
 
      (flatten-single-val (persistent! coll)))))
 

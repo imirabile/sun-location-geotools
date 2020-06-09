@@ -2,7 +2,8 @@
   "Provides helper functions for processing data within shapefiles and geopackages."
   (:use [location.macros])
   (:require [location.utils.common :as util]
-            [location.geocode :as geo])
+            [location.geocode :as geo]
+            [location.config :as cfg])
   (:import
     [org.geotools.filter.text.cql2 CQL]
     [com.vividsolutions.jts.geom GeometryFactory]
@@ -98,3 +99,10 @@
         dist-km (haversine lon lat (read-string longitude) (read-string latitude))]
     (conj obj {:distanceKm (util/round-num dist-km 2)
                :distanceMi (util/round-num (* dist-km 0.621371) 2)})))
+
+(defn expand-product
+  "Retrieves the geopackages that make up the supplied product."
+  [product]
+  (if-let [products (cfg/get-config (str "product." product))]
+    products
+    [product]))

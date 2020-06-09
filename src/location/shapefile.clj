@@ -153,14 +153,6 @@
         (close-shape store data)
         (resolve-indexed-shapefile attr fltr)))))
 
-(defn expand-product
-  "Retrieves the shapefiles that make up the supplied product."
-  [product]
-  (if-let [products (cfg/get-config (str "product." product))]
-    products
-    (when (set/subset? (hash-set product) valid-shapes)
-      [product])))
-
 (defn ^:private apply-key-mask
   "For the shapefiles which emit multiple attributes, zipmap them with the provided data."
   [product data]
