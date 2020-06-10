@@ -7,6 +7,7 @@
             [location.point-map           :as pm]
             [location.geocode             :as geo]
             [location.shapefile           :as shape]
+            [location.geopackage          :as geopkg]
             [location.utils.common        :as util]
             [location.utils.placeid       :as place]
             [location.geoboundary         :as gb]
@@ -255,7 +256,9 @@
   "Returns a seq of maps with data about the n closest products."
   [{:keys [product] :as req}]
   (when-let [geo (:geocode (get-typeid req))]
-    (when-let [locs (shape/get-near geo product)]
+    ;; Note: change the following to work with geopackage or shapefile
+    ;;(when-let [locs (shape/get-near geo product)]
+    (when-let [locs (geopkg/get-near geo product)]
       {:location locs})))
 
 (defn resolve-near

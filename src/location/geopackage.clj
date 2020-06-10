@@ -7,27 +7,31 @@
             [clojure.tools.logging :as log]
             [location.config :as cfg]
             [clojure.java.io :as io])
-  (:import [org.geotools.geopkg GeoPackage]))
+  (:import [org.geotools.geopkg GeoPackage]
+           (org.geotools.jdbc JDBCDataStore)
+           (org.geotools.data FileDataStoreFinder DataSourceException)))
 
 
 (def gt-path (str (cfg/get-config-first "geopackage.path") "/lsd_prod_all.gpkg"))
 
-(defonce ^GeoPackage geopackage (GeoPackage. (io/file gt-path)))
+(defonce geopackage (io/file gt-path))
 
 (def ^:private default-attr "PRESENT_NM")
 
 (defn ^:private get-features
   "Fetches the geopackage feature data using CQL."
   [polygon fltr]
-  (try
-    (some-> geopackage
-            (.getFeatureSource polygon)
-            (.getFeatures fltr)
-            .features)
+  (when-let [store (FileDataStoreFinder/getDataStore geopackage)]
+    (try
+      [store
+       (some-> store
+               (.getFeatureSource polygon)
+               (.getFeatures fltr)
+               .features)]
 
-    (catch org.geotools.data.DataSourceException ex
-      (log/info "Exception while loading" polygon "features")
-      (log/debug ex))))
+      (catch DataSourceException ex
+        (log/info "Exception while loading" polygon "features")
+        (log/debug ex)))))
 
 (defn ^:private nil-attr
   "Gets the provided attribute from the provided geopackage data. If this yields a nil or empty value, nil is returned."
