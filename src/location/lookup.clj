@@ -6,7 +6,7 @@
             [clojure.tools.logging        :as log]
             [location.point-map           :as pm]
             [location.geocode             :as geo]
-            [location.shapefile           :as shape]
+            ;;[location.shapefile           :as shape]
             [location.geopackage          :as geopkg]
             [location.utils.common        :as util]
             [location.utils.placeid       :as place]
@@ -23,13 +23,13 @@
   [allowed fields]
   (set/intersection fields allowed))
 
-(defn ^:private shapefile-fields
-  "Returns a set of fields within the request that are found in shapefiles."
-  [fields]
-  (when-let [types (seq
-                     (keep #(when ((comp not empty?) %) %)
-                           (type-fields fields shape/shapes)))]
-    (set types)))
+;;(defn ^:private shapefile-fields
+;;  "Returns a set of fields within the request that are found in shapefiles."
+;;  [fields]
+;;  (when-let [types (seq
+;;                     (keep #(when ((comp not empty?) %) %)
+;;                           (type-fields fields shape/shapes)))]
+;;    (set types)))
 
 (defn ^:private provider-fields
   "Returns a set of fields within the request that are found in mapping provider calls."
@@ -61,7 +61,7 @@
   (if geocode
     (when-let [fields (cfg/get-config "geoLocation.lookup.fields.added")]
       (let [[lat lon] (geo/split-geocode geocode)
-            values (shape/get-polygons (str lat "," lon) fields locale)]
+            values (geopkg/get-polygons (str lat "," lon) fields locale)]
         (util/combine-shapefile-fields-and-values (map keyword fields) values)))))
 
 (defn geocoder
@@ -117,11 +117,11 @@
   "Parses the lookup types and prepares calls to the various data sources."
   [{:keys [geocode language format fields zoom] :as req}]
   (let [fields (process-types (util/str-split fields #";"))
-        shapes (shapefile-fields fields)
+        shapes nil                                          ;;(shapefile-fields fields)
         p-fields (provider-fields (set/difference fields shapes))]
   
     (cond->> {}
-      shapes (merge {:polygons (shape/get-polygons geocode shapes language zoom)}))))
+      shapes (merge {:polygons (geopkg/get-polygons geocode shapes language zoom)}))))
   
 (defn geo-hit-test
   "Looks up the provided products in shapefiles."
@@ -151,7 +151,7 @@
         curr-type (hash-set type)]
     (if (set/subset? curr-type trigger-types)
       ;;  Adds fields to the data object if the parameter (type) entered is part of the set of trigger types
-      (merge data (select-keys (util/flatten-single-val (shape/get-polygons geo (hash-set fld) nil)) (map keyword (cfg/get-config (str "geoLocation.lookup.fields." fld ".keys")))))
+      (merge data (select-keys (util/flatten-single-val (geopkg/get-polygons geo (hash-set fld) nil)) (map keyword (cfg/get-config (str "geoLocation.lookup.fields." fld ".keys")))))
       data)))
 
 (defn add-conditional-point-data

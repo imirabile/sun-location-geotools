@@ -4,7 +4,7 @@
   (:require [location.utils.common  :as util]
             [location.config        :as cfg]
             [location.error-message :as e]
-            [location.shapefile     :as shape]
+            [location.geopackage     :as geopkg]
             [location.geocode       :as geo]
             [clojure.string         :as str]
             [clojure.set            :as set]))
@@ -41,7 +41,7 @@
 
 (def unsupported-product-values
   "Partially applies products to unsupported-values"
-  (partial unsupported-value (map keyword shape/all-shapes) "product"))
+  (partial unsupported-value (map keyword geopkg/all-shapes) "product"))
 
 (def unsupported-format-values
   "Partially applies format to unsupported-values"
@@ -64,7 +64,7 @@
                                                    (cfg/get-config
                                                      "geoLocation.lookup.fields"))
                                               (map keyword cfg/aliases))))
-                                        shape/shapes)
+                                        geopkg/shapes)
                              "field"))
 
 (def unsupported-near-values

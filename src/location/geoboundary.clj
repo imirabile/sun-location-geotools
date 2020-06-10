@@ -1,7 +1,7 @@
 (ns location.geoboundary
-  (:require [location.shapefile    :as shape]
-            [location.utils.common :as util]
-            [location.shapefile    :as shape]))
+  (:require [location.utils.common :as util]
+            [location.geopackage   :as geopkg]
+            ))
 
 (defn ^:private format-coordinates
   "Formats the vector of coordinates to produce a seq of lat/long maps."
@@ -40,5 +40,5 @@
   "Retrieves the polygon geometry of the requested product."
   [geocode product]
   ;;  Filters out any nil values, as get-geometries will return a seq with a nil value if the file is not found
-  (when-let [bounds (seq (flatten (keep identity (shape/get-geometries geocode product))))]
+  (when-let [bounds (seq (flatten (keep identity (geopkg/get-geometries geocode product))))]
     {:features (map #(make-geo-json-feature %) (flatten bounds))}))

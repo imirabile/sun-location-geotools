@@ -3,7 +3,7 @@
         [location.utils.geometry]
         [location.utils.common])
   (:require [location.config :as cfg]
-            [location.shapefile :as shape]
+            ;;[location.shapefile :as shape]
             [location.geopackage :as geopkg]))
 
 (defn ^:private get-identity

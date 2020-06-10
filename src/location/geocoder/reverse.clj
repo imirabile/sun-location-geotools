@@ -1,6 +1,6 @@
 (ns location.geocoder.reverse
   "Provides functions for querying shapefiles based on geo codes"
-  (:require [location.shapefile    :as shape]
+  (:require [location.geopackage    :as geopkg]
             [location.geocode      :as geo]
             [location.config       :as cfg]
             [location.utils.common :as util]))
@@ -12,7 +12,7 @@
 
   ([geo locale]
    ;  Checks whether there are results for the given geocode
-   (when-let [data (shape/get-polygons geo (cfg/get-config "reverse.geocoder.shapefiles") locale)]
+   (when-let [data (geopkg/get-polygons geo (cfg/get-config "reverse.geocoder.shapefiles") locale)]
      (let [all-fields (util/combine-shapefile-fields-and-values 
                        (map keyword (cfg/get-config "reverse.geocoder.fields")) data)]
        (if (some (complement nil?) (vals all-fields))

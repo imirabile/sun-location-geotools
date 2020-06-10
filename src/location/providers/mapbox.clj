@@ -10,7 +10,7 @@
             [location.config         :as cfg]
             [clojure.set             :as set]
             [clojure.tools.logging   :as log]
-            [location.shapefile      :as shape]
+            [location.geopackage      :as geopkg]
             [location.point-map      :as pm]))
 
 (def ^:private reverse-server-prefix (cfg/get-config-first "geoLocation.lookup.mapbox.reversegeo.prefix"))
@@ -222,7 +222,7 @@
                  (set (map name nil-in-response)))]
     (when-not (empty? to-add)
       (zipmap (map keyword to-add)
-              (keep identity (shape/get-polygons (str latitude "," longitude) to-add lang))))))
+              (keep identity (geopkg/get-polygons (str latitude "," longitude) to-add lang))))))
 
 (defn add-missing-fields
   "Adds any of the fields required in the response that are missing from initial provider result set.  

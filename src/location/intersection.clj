@@ -1,7 +1,7 @@
 (ns location.intersection
   (:use [location.macros]
         [location.utils.geometry])
-  (:require [location.shapefile    :as shape]
+  (:require [location.geopackage    :as geopkg]
             [location.geohittest   :as gh]))
 
 (defn ^:private format-intersections
@@ -19,7 +19,7 @@
 (defn get-intersections
   "Gets and formats the values for the products that intersect or are contained within the supplied overlay"
   [geocode product overlay]
-  (let [data (seq (filter (complement empty?) (shape/get-intersecs geocode product overlay)))]
+  (let [data (seq (filter (complement empty?) (geopkg/get-intersecs geocode product overlay)))]
     (when (seq (keep identity (flatten data)))
       (format-intersections data product geocode overlay))))
 
