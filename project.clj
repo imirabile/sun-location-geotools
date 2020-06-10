@@ -29,18 +29,18 @@
                  [org.geotools/gt-geopkg "23.1"
                   :exclusions [org.eclipse.emf/org.eclipse.emf.ecore
                                org.eclipse.emf/org.eclipse.emf.common
-                               ;;org.geotools.xsd/gt-xsd-core
-                               ]
-                  ]
+                               org.geotools.xsd/gt-xsd-core
+                               javax.xml.bind/jaxb-api]]
                  [org.geotools/gt-cql "23.0"
                   :exclusions [org.eclipse.emf/org.eclipse.emf.common
                                org.eclipse.emf/org.eclipse.emf.ecore]]
-                 [org.geotools/gt-data "16.2"]
+                 [org.geotools/gt-data "20.5"]
+                 [org.geotools/gt-epsg-hsql "23.1" :exclusions  [org.eclipse.emf/org.eclipse.emf.common org.eclipse.emf/org.eclipse.emf.ecore]]
                  [com.vividsolutions/jts "1.11"]
                  [org.apache.logging.log4j/log4j-core "2.6.1"]
                  [org.apache.logging.log4j/log4j-slf4j-impl "2.6.1"]
                  [org.apache.logging.log4j/log4j-web "2.6.1"]
-                 [cc.qbits/alia "3.2.0"]
+                 [cc.qbits/alia "3.2.0" :exclusions [org.clojure/clojure]]
                  [http-kit "2.1.18"]
                  [clj-http "3.2.0"]
                  [jline "2.11"]]

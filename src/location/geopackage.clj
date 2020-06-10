@@ -7,31 +7,40 @@
             [clojure.tools.logging :as log]
             [location.config :as cfg]
             [clojure.java.io :as io])
-  (:import [org.geotools.geopkg GeoPackage]
+  (:import [org.geotools.geopkg GeoPackage FeatureEntry]
            (org.geotools.jdbc JDBCDataStore)
-           (org.geotools.data FileDataStoreFinder DataSourceException)))
+           (org.geotools.data FileDataStoreFinder DataSourceException)
+           (org.geotools.data.simple SimpleFeatureReader)))
 
 
 (def gt-path (str (cfg/get-config-first "geopackage.path") "/lsd_prod_all.gpkg"))
 
-(defonce geopackage (io/file gt-path))
+(defonce geopackage (GeoPackage. (io/file gt-path)))
 
 (def ^:private default-attr "PRESENT_NM")
 
 (defn ^:private get-features
   "Fetches the geopackage feature data using CQL."
   [polygon fltr]
-  (when-let [store (FileDataStoreFinder/getDataStore geopackage)]
-    (try
-      [store
-       (some-> store
-               (.getFeatureSource polygon)
-               (.getFeatures fltr)
-               .features)]
+  ;; debug
+  (log/info "***** Features: *****")
+  (doall (map #(log/info (.getTableName %)) (.features geopackage)))
 
-      (catch DataSourceException ex
-        (log/info "Exception while loading" polygon "features")
-        (log/debug ex)))))
+  (let [^FeatureEntry entry (.feature geopackage "lsd_prod_all")
+        ^SimpleFeatureReader sfr (.reader geopackage entry fltr nil)]
+    sfr))
+
+;;(when-let [store (FileDataStoreFinder/getDataStore geopackage)]
+;;  (try
+;;    [store
+;;     (some-> store
+;;             (.getFeatureSource polygon)
+;;             (.getFeatures fltr)
+;;             .features)]
+;;
+;;    (catch DataSourceException ex
+;;      (log/info "Exception while loading" polygon "features")
+;;      (log/debug ex)))))
 
 (defn ^:private nil-attr
   "Gets the provided attribute from the provided geopackage data. If this yields a nil or empty value, nil is returned."
