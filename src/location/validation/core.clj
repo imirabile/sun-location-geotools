@@ -1,6 +1,7 @@
 (ns location.validation.core
   "Provides functions for validating user input."
-  (:use [location.macros])
+  (:use [location.macros]
+        [location.utils.geometry])
   (:require [location.utils.common  :as util]
             [location.config        :as cfg]
             [location.error-message :as e]
@@ -41,7 +42,7 @@
 
 (def unsupported-product-values
   "Partially applies products to unsupported-values"
-  (partial unsupported-value (map keyword geopkg/all-shapes) "product"))
+  (partial unsupported-value (map keyword all-shapes) "product"))
 
 (def unsupported-format-values
   "Partially applies format to unsupported-values"
@@ -64,7 +65,7 @@
                                                    (cfg/get-config
                                                      "geoLocation.lookup.fields"))
                                               (map keyword cfg/aliases))))
-                                        geopkg/shapes)
+                                        shapes)
                              "field"))
 
 (def unsupported-near-values

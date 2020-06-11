@@ -9,8 +9,6 @@
             [clojure.java.io :as io]
             [clojure.set :as set])
   (:import [org.geotools.geopkg GeoPackage FeatureEntry]
-           (org.geotools.jdbc JDBCDataStore)
-           (org.geotools.data FileDataStoreFinder DataSourceException)
            (org.geotools.data.simple SimpleFeatureReader)))
 
 
@@ -30,46 +28,6 @@
   (let [^FeatureEntry entry (.feature geopackage "lsd_prod_all")
         ^SimpleFeatureReader sfr (.reader geopackage entry fltr nil)]
     sfr))
-
-(def valid-shapes
-  "Fetches only shapefiles from the configured directory."
-  (let [shapefile-path (str (cfg/get-config-first "shapefile.path"))
-        dir (io/file shapefile-path)]
-    (log/debug "Searching for shapefiles in" shapefile-path)
-    (->> dir
-      file-seq
-      (map (comp last #(str/split % #"\/") str))
-      (filter #(re-find #"(\w+)\.shp$" %))
-      (map (comp first #(str/split % #"\.")))
-      set)))
-
-(def all-shapes
-  "Returns shapefiles and products from the configured directory."
-  (set/union valid-shapes cfg/products))
-
-(def shapes
-  "A set of all available shapefiles. This is the set difference between all files in the directory and the blacklisted files from configuration."
-  (do
-    (log/info "Available products: " (str/join ", " cfg/products))
-    (log/info "Available shapefiles: " (str/join ", " valid-shapes))
-    (when ((comp not empty?) (cfg/get-config "shapefile.blacklist"))
-      (log/info "Blacklisted shapefiles: " (str/join ", " (cfg/get-config "shapefile.blacklist"))))
-    (when-let [aliases nil]
-      (log/info "Aliases containing blacklisted files: " aliases))
-    (set/difference all-shapes (cfg/get-config "shapefile.blacklist"))))
-
-
-;;(when-let [store (FileDataStoreFinder/getDataStore geopackage)]
-;;  (try
-;;    [store
-;;     (some-> store
-;;             (.getFeatureSource polygon)
-;;             (.getFeatures fltr)
-;;             .features)]
-;;
-;;    (catch DataSourceException ex
-;;      (log/info "Exception while loading" polygon "features")
-;;      (log/debug ex)))))
 
 (defn ^:private nil-attr
   "Gets the provided attribute from the provided geopackage data. If this yields a nil or empty value, nil is returned."
@@ -134,7 +92,6 @@
   ([fltr locale product shape]
    (let [data (get-features shape fltr)
          attributes (when data (get-attribute data product locale))]
-     ;;(close-shape store data)
      (apply-key-mask product attributes))))
 
 (defn ^:private get-product

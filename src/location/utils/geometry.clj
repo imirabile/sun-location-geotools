@@ -3,7 +3,11 @@
   (:use [location.macros])
   (:require [location.utils.common :as util]
             [location.geocode :as geo]
-            [location.config :as cfg])
+            [location.config :as cfg]
+            [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
+            [clojure.set :as set])
   (:import
     [org.geotools.filter.text.cql2 CQL]
     [com.vividsolutions.jts.geom GeometryFactory]
@@ -49,37 +53,68 @@
   [geocode]
   (str (geo/get-longitude geocode) " " (geo/get-latitude geocode)))
 
+;;
+;; Filter Helpers
+;;
+
 (defn touches-filter
   "Geotools filter for determining if a point is touched by a LineString"
-  [geocode]
-  (CQL/toFilter (str "TOUCHES(the_geom, POINT("
-                     (get-point-str geocode) "))")))
+  ([geocode]
+   (CQL/toFilter (str "TOUCHES(the_geom, POINT("
+                      (get-point-str geocode) "))")))
+
+  ([geocode loc-type]
+   (CQL/toFilter (str "loc_type='" loc-type "' AND TOUCHES(geom, POINT("
+                      (get-point-str geocode) "))"))))
+
 
 (defn contains-filter
   "Geotools filter for determining if a point is contained within a polygon"
-  [geocode]
-  (CQL/toFilter (str "CONTAINS(the_geom, POINT("
-                     (get-point-str geocode) "))")))
+  ([geocode]
+   (CQL/toFilter (str "CONTAINS(the_geom, POINT("
+                      (get-point-str geocode) "))")))
+
+  ([geocode loc-type]
+   (CQL/toFilter (str "loc_type='" loc-type "' AND CONTAINS(geom, POINT("
+                      (get-point-str geocode) "))"))))
 
 (defn dwithin-filter
   "Geotools filter for determining if a polygon within a radius of the given point."
-  [geocode zoom]
-  (CQL/toFilter (str "DWITHIN(the_geom, POINT("
-                     (get-point-str geocode) "), "
-                     (calc-zoom-level zoom) ", kilometers)")))
+  ([geocode zoom]
+   (CQL/toFilter (str "DWITHIN(the_geom, POINT("
+                      (get-point-str geocode) "), "
+                      (calc-zoom-level zoom) ", kilometers)")))
+
+  ([geocode zoom loc-type]
+   (CQL/toFilter (str "loc_type='" loc-type "' AND DWITHIN(the_geom, POINT("
+                      (get-point-str geocode) "), "
+                      (calc-zoom-level zoom) ", kilometers)"))))
 
 (defn intersection-filter
   "Geotools filter for determining if a polygon is included in the overlay field
   Must ultimately end up with a MultiPolygon made up of Polygon(s)
   derived from each set of Coordinates, as some polygons have 'holes', ie Arizona's ianaTimeZone"
-  [overlay]
-  (let [poly (.createMultiPolygon
-               geo-factory
-               (into-array (map (fn [[shell & holes]]
-                                  (.createPolygon geo-factory shell (when holes (into-array holes))))
-                                (:coordinates overlay))))]
-    (CQL/toFilter (str "INTERSECTS(the_geom, " poly
-                       ") AND NOT TOUCHES(the_geom, " poly ")"))))
+  ([overlay]
+   (let [poly (.createMultiPolygon
+                geo-factory
+                (into-array (map (fn [[shell & holes]]
+                                   (.createPolygon geo-factory shell (when holes (into-array holes))))
+                                 (:coordinates overlay))))]
+     (CQL/toFilter (str "INTERSECTS(the_geom, " poly
+                        ") AND NOT TOUCHES(the_geom, " poly ")"))))
+
+  ([overlay loc-type]
+   (let [poly (.createMultiPolygon
+                geo-factory
+                (into-array (map (fn [[shell & holes]]
+                                   (.createPolygon geo-factory shell (when holes (into-array holes))))
+                                 (:coordinates overlay))))]
+     (CQL/toFilter (str "loc_type='" loc-type "' AND INTERSECTS(geom, " poly
+                        ") AND NOT TOUCHES(geom, " poly ")")))))
+
+;;
+;; Geometry Helpers
+;;
 
 (defn haversine
   "Calculates the distance between to points on a sphere according to the Haversine formula."
@@ -100,9 +135,40 @@
     (conj obj {:distanceKm (util/round-num dist-km 2)
                :distanceMi (util/round-num (* dist-km 0.621371) 2)})))
 
+;;
+;; Shape and product helpers
+;;
+
 (defn expand-product
   "Retrieves the geopackages that make up the supplied product."
   [product]
   (if-let [products (cfg/get-config (str "product." product))]
     products
     [product]))
+
+(def valid-shapes
+  "Fetches only shapefiles from the configured directory."
+  (let [shapefile-path (str (cfg/get-config-first "shapefile.path"))
+        dir (io/file shapefile-path)]
+    (log/debug "Searching for shapefiles in" shapefile-path)
+    (->> dir
+         file-seq
+         (map (comp last #(str/split % #"\/") str))
+         (filter #(re-find #"(\w+)\.shp$" %))
+         (map (comp first #(str/split % #"\.")))
+         set)))
+
+(def all-shapes
+  "Returns shapefiles and products from the configured directory."
+  (set/union valid-shapes cfg/products))
+
+(def shapes
+  "A set of all available shapefiles. This is the set difference between all files in the directory and the blacklisted files from configuration."
+  (do
+    (log/info "Available products: " (str/join ", " cfg/products))
+    (log/info "Available shapefiles: " (str/join ", " valid-shapes))
+    (when ((comp not empty?) (cfg/get-config "shapefile.blacklist"))
+      (log/info "Blacklisted shapefiles: " (str/join ", " (cfg/get-config "shapefile.blacklist"))))
+    (when-let [aliases nil]
+      (log/info "Aliases containing blacklisted files: " aliases))
+    (set/difference all-shapes (cfg/get-config "shapefile.blacklist"))))
