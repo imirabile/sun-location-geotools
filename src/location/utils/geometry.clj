@@ -86,7 +86,7 @@
                       (calc-zoom-level zoom) ", kilometers)")))
 
   ([geocode zoom loc-type]
-   (CQL/toFilter (str "loc_type='" loc-type "' AND DWITHIN(the_geom, POINT("
+   (CQL/toFilter (str "loc_type='" loc-type "' AND DWITHIN(geom, POINT("
                       (get-point-str geocode) "), "
                       (calc-zoom-level zoom) ", kilometers)"))))
 

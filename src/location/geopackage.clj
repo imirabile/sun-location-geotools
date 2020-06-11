@@ -20,13 +20,9 @@
 
 (defn ^:private get-features
   "Fetches the geopackage feature data using CQL."
-  [polygon fltr]
-  ;; debug
-  (log/info "***** Features: *****")
-  (doall (map #(log/info (.getTableName %)) (.features geopackage)))
-
+  [filter-fn]
   (let [^FeatureEntry entry (.feature geopackage "lsd_prod_all")
-        ^SimpleFeatureReader sfr (.reader geopackage entry fltr nil)]
+        ^SimpleFeatureReader sfr (.reader geopackage entry filter-fn nil)]
     sfr))
 
 (defn ^:private nil-attr
@@ -84,21 +80,19 @@
     (map (partial zipmap (map keyword mask)) (partition (count mask) data))
     data))
 
+
 (defn ^:private get-polygon
   "Given a geocode, returns the requested polygon from the geopackage."
-  ([fltr locale product]
-   (get-polygon fltr locale product product))
-
-  ([fltr locale product shape]
-   (let [data (get-features shape fltr)
-         attributes (when data (get-attribute data product locale))]
-     (apply-key-mask product attributes))))
+  [filter-fn locale product]
+  (let [data (get-features filter-fn)
+        attributes (when data (get-attribute data product locale))]
+    (apply-key-mask product attributes)))
 
 (defn ^:private get-product
   "Returns the product keys for the given filter."
-  [fltr locale product]
+  [filter-fn locale product]
   (when-let [expanded (expand-product product)]
-    (map #(get-polygon fltr locale %) expanded)))
+    (map #(get-polygon filter-fn locale %) expanded)))
 
 (defn get-polygons
   "Returns a map of polygons of the requested types."
@@ -108,13 +102,14 @@
   ([geocode products locale zoom]
    (try
      (when geocode
-       (let [fltr (if-not (nil? zoom)
-                    (dwithin-filter geocode (Integer/parseInt zoom))
-                    (contains-filter geocode))
-             f (partial get-product fltr locale)]
+       (letfn [(f [product]
+                 (let [filter-fn (if-not (nil? zoom)
+                                   (dwithin-filter geocode (Integer/parseInt zoom) product)
+                                   (contains-filter geocode product))]
+                   (get-product filter-fn locale product)))]
          (map (comp flatten-single-val f) products)))
 
-     (catch java.lang.NumberFormatException ex
+     (catch NumberFormatException ex
        (log/info "Non-numeric value passed to get-polygons")
        (log/debug ex)))))
 
@@ -160,52 +155,45 @@
 
 (defn ^:private get-boundary
   "Fetches the boundary coordinates for the given product."
-  ([fltr product]
-   (get-boundary fltr product product))
+  [filter-fn product]
+  (let [data (get-features filter-fn)
+        coll (transient [])]
+    (try
+      (while (.hasNext data)
+        (let [next (.next data)
+              default-geo (.getDefaultGeometry next)
+              polygon-count (.getNumGeometries default-geo)
+              polygon-type (.getGeometryType default-geo)]
+          (conj! coll
+                 {:product     product
+                  :type        (if (and (= 1 polygon-count) (= polygon-type "MultiPolygon")) "Polygon" polygon-type)
+                  :coordinates (get-coordinates default-geo polygon-count polygon-type)
+                  :key         (nil-attr next (get-key-attr product))})))
 
-  ([fltr product shape]
-   (let [data (get-features shape fltr)
-         coll (transient [])]
-     (try
-       (while (.hasNext data)
-         (let [next (.next data)
-               default-geo (.getDefaultGeometry next)
-               polygon-count (.getNumGeometries default-geo)
-               polygon-type (.getGeometryType default-geo)]
-           (conj! coll
-                  {:product     product
-                   :type        (if (and (= 1 polygon-count) (= polygon-type "MultiPolygon")) "Polygon" polygon-type)
-                   :coordinates (get-coordinates default-geo polygon-count polygon-type)
-                   :key         (nil-attr next (get-key-attr product))})))
+      (catch Exception ex
+        (log/debug "Exception fetching " product " geometry")
+        (log/error ex)))
 
-       (catch Exception ex
-         (log/debug "Exception fetching " product " geometry")
-         (log/error ex))
-       ;;(finally
-       ;;  (close-shape store data)
-       ;;  )
-       )
-
-     (flatten-single-val (persistent! coll)))))
+    (flatten-single-val (persistent! coll))))
 
 (defn get-geometries
   "Returns a map of polygon boundaries for all polygons in the requested product."
   [geocode product]
   (when-let [expanded (expand-product product)]
     (let [filter-fn (if (cfg/is-line-string-product? product) touches-filter contains-filter)]
-      (map #(get-boundary (filter-fn geocode) %) expanded))))
+      (map #(get-boundary (filter-fn geocode product) %) expanded))))
 
 (defn get-intersection
   "Iterates over the collection of filters and uses them to get the product data"
-  [expanded fltr]
-  (map #(get-product fltr nil %) expanded))
+  [expanded filter-fn]
+  (map #(get-product filter-fn nil %) expanded))
 
 (defn get-intersecs
   "Returns a sequence of the product values contained in the overlay"
   [geocode product overlay]
   (when-let [geometries (seq (filter (complement empty?) (get-geometries geocode overlay)))]
     (let [expanded (expand-product product)
-          filters (map #(intersection-filter %) geometries)]
+          filters (map #(intersection-filter % product) geometries)]
       (map #(get-intersection expanded %) filters))))
 
 (defn get-near
